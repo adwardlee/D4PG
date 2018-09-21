@@ -57,22 +57,19 @@ if __name__ == '__main__':
         #displayer = Displayer.Displayer()
         buffer = ExperienceBuffer()
 
-        gui = GUI.Interface(['ep_reward', 'plot', 'render', 'gif', 'save'])
-        gui_thread = threading.Thread(target=gui.run)
 
         threads = []
         for i in range(Settings.NB_ACTORS):
-            agent = Agent(sess, i, gui, displayer, buffer)
+            agent = Agent(sess, i, buffer)
             threads.append(threading.Thread(target=agent.run))
 
         # with tf.device('/device:GPU:0'):
-        learner = QNetwork(sess, gui, saver, buffer)
+        learner = QNetwork(sess, saver, buffer)
         threads.append(threading.Thread(target=learner.run))
 
         if not saver.load():
             sess.run(tf.global_variables_initializer())
 
-        gui_thread.start()
         for t in threads:
             t.start()
 
@@ -98,6 +95,4 @@ if __name__ == '__main__':
 ################################################################################
 
         saver.save(learner.total_eps)
-        displayer.disp()
 
-        gui_thread.join()

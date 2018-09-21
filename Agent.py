@@ -16,13 +16,11 @@ class Agent:
     experiences and put them into a buffer.
     """
 
-    def __init__(self, sess, n_agent, gui, displayer, buffer):
+    def __init__(self, sess, n_agent, buffer):
         print("Initializing agent %i..." % n_agent)
 
         self.n_agent = n_agent
         self.sess = sess
-        self.gui = gui
-        self.displayer = displayer
         self.buffer = buffer
 
         self.env = Environment()
@@ -94,7 +92,7 @@ class Agent:
         self.total_steps = 0
         self.nb_ep = 1
 
-        while self.nb_ep < Settings.TRAINING_EPS and not self.gui.STOP:
+        while self.nb_ep < Settings.TRAINING_EPS:
 
             s = self.env.reset()
             episode_reward = 0
@@ -141,20 +139,19 @@ class Agent:
             if self.nb_ep % Settings.UPDATE_ACTORS_FREQ == 0:
                 self.sess.run(self.update)
 
-            if not self.gui.STOP:
-                if self.n_agent == 1 and self.gui.ep_reward.get(self.nb_ep):
-                    print("Episode %i : reward %i, steps %i, noise scale %f" % (self.nb_ep, episode_reward, episode_step, noise_scale))
+            if self.n_agent == 1 and self.gui.ep_reward.get(self.nb_ep):
+                print("Episode %i : reward %i, steps %i, noise scale %f" % (self.nb_ep, episode_reward, episode_step, noise_scale))
 
-                plot = (self.n_agent == 1 and self.gui.plot.get(self.nb_ep))
-                self.displayer.add_reward(episode_reward, self.n_agent, plot=plot)
+            plot = (self.n_agent == 1 and self.gui.plot.get(self.nb_ep))
+            self.displayer.add_reward(episode_reward, self.n_agent, plot=plot)
 
-                # Write the summary
-                feed_dict = {self.ep_reward_ph: episode_reward,
-                             self.noise_ph: noise_scale,
-                             self.steps_ph: episode_step}
-                summary = self.sess.run(self.ep_summary, feed_dict=feed_dict)
-                self.writer.add_summary(summary, self.nb_ep)
+            # Write the summary
+            feed_dict = {self.ep_reward_ph: episode_reward,
+                         self.noise_ph: noise_scale,
+                         self.steps_ph: episode_step}
+            summary = self.sess.run(self.ep_summary, feed_dict=feed_dict)
+            self.writer.add_summary(summary, self.nb_ep)
 
-                self.nb_ep += 1
+            self.nb_ep += 1
 
         self.env.close()
